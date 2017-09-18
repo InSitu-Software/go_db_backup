@@ -1,0 +1,8 @@
+{
+  "keyFile": "~/.ssh/id_rsa",
+  "host": "localhost",
+  "port": "22",
+  "user": "joe",
+  "remoteBasePath": "/backup/",
+  "localBasePath": "./"
+}
