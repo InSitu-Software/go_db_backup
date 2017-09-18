@@ -28,6 +28,7 @@ func init() {
 
 	viper.SetConfigName("go_db_backup")
 	viper.AddConfigPath("config")
+	viper.AddConfigPath("config/default")
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatal(err)
