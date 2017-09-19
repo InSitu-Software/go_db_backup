@@ -23,6 +23,7 @@ func init() {
 	pflag.String("dbName", "insitu", "DBName of Backup")
 	pflag.String("logfile", "", "Logile path")
 	pflag.String("config", "", "Configfile")
+	pflag.Bool("debug", false, "show debug log output")
 	pflag.Parse()
 
 	viper.BindPFlags(pflag.CommandLine)
@@ -45,6 +46,10 @@ func init() {
 		}
 
 		log.SetOutput(f)
+	}
+
+	if viper.GetBool("debug") {
+		log.SetLevel(log.DebugLevel)
 	}
 }
 
