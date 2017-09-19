@@ -22,16 +22,20 @@ func init() {
 	pflag.String("user", "", "Username")
 	pflag.String("dbName", "insitu", "DBName of Backup")
 	pflag.String("logfile", "", "Logile path")
+	pflag.String("config", "", "Configfile")
 	pflag.Parse()
 
 	viper.BindPFlags(pflag.CommandLine)
 
-	viper.SetConfigName("go_db_backup")
-	viper.AddConfigPath("config")
-	viper.AddConfigPath("config/default")
-	err := viper.ReadInConfig()
-	if err != nil {
-		log.Fatal(err)
+	if viper.GetString("config") != "" {
+		viper.SetConfigName("go_db_backup")
+		viper.AddConfigPath("config")
+		viper.AddConfigPath("config/default")
+		err := viper.ReadInConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	}
 
 	if viper.GetString("logfile") != "" {
