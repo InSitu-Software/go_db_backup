@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"time"
 
 	"github.com/pkg/sftp"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh"
@@ -36,12 +35,21 @@ func init() {
 }
 
 func main() {
-
 	var now = time.Now().Local()
+
+	log.WithFields(
+		log.Fields{
+			"time": now.Format("2006-01-02_15:04:02"),
+		},
+	).Info("Start Backup Retrival")
+
 	var backupFileName = viper.GetString("dbName") + "_" + now.Format("2006-01-02") + ".7z"
 	var backupFilePath = viper.GetString("remoteBasePath") + backupFileName
 
 	privateKey, err := ioutil.ReadFile(viper.GetString("keyFile"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	signer, err := ssh.ParsePrivateKey(privateKey)
 	if err != nil {
 		log.Fatal(err)
@@ -54,15 +62,25 @@ func main() {
 		},
 	}
 
+	log.WithField(
+		"host",
+		viper.GetString("host")+":"+viper.GetString("port"),
+	).Debug("Try to establish connection")
 	client, err := ssh.Dial(
 		"tcp",
 		viper.GetString("host")+":"+viper.GetString("port"),
 		config,
 	)
 	if err != nil {
-		panic("Failed to dial: " + err.Error())
+		log.WithField(
+			"host",
+			viper.GetString("host")+":"+viper.GetString("port"),
+		).Fatal(err)
 	}
-	fmt.Println("Successfully connected to ssh server.")
+	log.WithField(
+		"time",
+		time.Now().Local().Format("2006-01-02_15:04:02"),
+	).Debug("Connection established")
 
 	// open an SFTP session over an existing ssh connection.
 	sftp, err := sftp.NewClient(client)
@@ -78,18 +96,26 @@ func main() {
 	}
 	defer srcFile.Close()
 
+	log.Debug("Connections / Interfaces created")
+
 	// Create the destination file
 	dstFile, err := os.Create(viper.GetString("localBasePath") + backupFileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer dstFile.Close()
+	log.Debug("Local File touched")
 
 	// Copy the file
-	_, err = srcFile.WriteTo(dstFile)
+	written, err := srcFile.WriteTo(dstFile)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.WithFields(log.Fields{
+		"time":      time.Now().Local().Format("2006-01-02_15:04:02"),
+		"bytes":     written,
+		"localPath": viper.GetString("localBasePath") + backupFileName,
+	}).Info("Backup successfully written")
 }
 
 func keyCallBack(hostname string, remote net.Addr, key ssh.PublicKey) error {
