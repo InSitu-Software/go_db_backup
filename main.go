@@ -21,6 +21,7 @@ func init() {
 	pflag.String("localBasePath", "", "Local Base apth for backup")
 	pflag.String("user", "", "Username")
 	pflag.String("dbName", "insitu", "DBName of Backup")
+	pflag.String("logfile", "", "Logile path")
 	pflag.Parse()
 
 	viper.BindPFlags(pflag.CommandLine)
@@ -31,6 +32,15 @@ func init() {
 	err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if viper.GetString("logfile") != "" {
+		f, err := os.OpenFile(viper.GetString("logfile"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.SetOutput(f)
 	}
 }
 
